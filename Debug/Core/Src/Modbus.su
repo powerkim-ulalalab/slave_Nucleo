@@ -1,0 +1,14 @@
+Modbus.h:154:17:crc16	24	static
+Modbus.c:19:6:ModbusSlave	8	static
+Modbus.c:26:6:Search_ID	16	static
+Modbus.c:38:6:TableInit	8	static
+Modbus.c:42:6:packetInit	8	static
+Modbus.c:55:6:RX_Buf_Init	8	static
+Modbus.c:62:6:frameCplt	4	static
+Modbus.c:74:9:GetRX_Packet	8	static
+Modbus.c:126:9:GetTX_Packet	16	static
+Modbus.c:170:6:GetHandleData	24	static
+Modbus.c:187:6:GetCoilRegData	24	static
+Modbus.c:205:9:GetCoilRegTable	16	static
+Modbus.c:238:9:GetTableAdr	4	static
+Modbus.c:292:6:GetCRC	24	static
