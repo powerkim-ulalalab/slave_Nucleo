@@ -31,9 +31,12 @@
 #define EMPTY 0
 #define FULL	1
 
+#define RXADR	1
+#define TXADR	2
 
-
-
+#define RX_OK	1
+#define RXMODE 1
+#define TXMODE 2
 
 typedef struct _modbus {
   uint8_t id;
@@ -49,7 +52,6 @@ typedef struct _modbus {
 typedef struct _table
 {
 	uint8_t slaveId[SLAVEIDLEN];
-
 
 }TABLE;
 
@@ -79,6 +81,9 @@ enum Frame
 	TxLen = 2,
 
 };
+
+
+
 
 enum FuncCode
 {
@@ -166,16 +171,18 @@ static uint16_t crc16(uint8_t *buffer, uint16_t buffer_length)
 
     return (crc_hi << 8 | crc_lo);
 }
-
+void GetTX_Packet();
+uint8_t SelectMode(uint8_t RX_Flag , uint8_t TX_Flag);
+bool SetHandleFlag(uint8_t *flag , uint8_t onOff);
 void GetCoilRegData();
-uint8_t GetCoilRegTable();
-uint8_t GetTableAdr();
+uint16_t* GetCoilRegTable();
+uint16_t GetTableAdr();
 uint8_t GetRX_Packet();
 void packetInit();
 void TableInit();
-bool Search_ID(uint8_t taget);
+uint8_t Search_ID(uint8_t taget);
 void frameCplt();
-void ModbusSlave();
+void MB_Slave();
 void showPacket(uint8_t *packet , uint16_t len);
 void GetCRC(uint8_t *packet);
 void RX_Buf_Init();

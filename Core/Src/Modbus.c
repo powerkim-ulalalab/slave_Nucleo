@@ -7,7 +7,6 @@
 
 #include "Modbus.h"
 
-
 volatile uint16_t RX_DataCnt = 0;
 uint8_t MB_RxBuf[RXBUFLEN] = {0,};
 uint8_t MB_TXBuf[TXBUFLEN] = {0,};
@@ -15,18 +14,13 @@ uint8_t RX_Data = 0;
 
 MB_Handle packetHandle;
 TABLE table;
+extern UART_HandleTypeDef huart2;
 
-void ModbusSlave()
-{
-	Rx_TimerStartStop();
-	frameCplt();
-	GetRX_Packet();
-}
-
-bool Search_ID(uint8_t taget)
+uint8_t Search_ID(uint8_t taget)
 {
 	if(Table_SlaveID[taget] == FULL)
 	{
+
 		return TURE;
 	}
 	else
@@ -35,10 +29,49 @@ bool Search_ID(uint8_t taget)
 	}
 }
 
+void MB_Slave()
+{
+	Rx_TimerStartStop();
+	frameCplt();
+
+	uint8_t mode = SelectMode(packetHandle.RX_Flag ,packetHandle.TX_Flag );
+
+	switch(mode)
+	{
+		case RXMODE:
+		{
+			GetRX_Packet();
+			break;
+		}
+
+		case TXMODE:
+		{
+			GetTX_Packet();
+			break;
+		}
+
+	}
+
+}
+
+uint8_t SelectMode(uint8_t RX_Flag , uint8_t TX_Flag)
+{
+	if(RX_Flag == ON)
+	{
+		return RXMODE;
+	}
+
+	if(TX_Flag == ON)
+	{
+		return TXMODE;
+	}
+}
+
 void TableInit()
 {
 	memset(table.slaveId, EMPTY , SLAVEIDLEN);
 }
+
 void packetInit()
 {
 	packetHandle.id = 0;
@@ -63,26 +96,81 @@ void frameCplt()
 {
 	if(RX_DataCnt == 8)
 	{
-		packetHandle.RX_Flag = ON;
+		SetHandleFlag(&packetHandle.RX_Flag , ON);
+
 	}
-	else
+	else if(RX_DataCnt == 0)
 	{
-		packetHandle.RX_Flag = OFF;
+		SetHandleFlag(&packetHandle.RX_Flag , OFF);
+	}
+
+}
+
+bool SetHandleFlag(uint8_t *flag , uint8_t onOff)
+{
+
+	uint8_t *RxAdr = &packetHandle.RX_Flag;
+	uint8_t *TxAdr = &packetHandle.TX_Flag;
+	uint8_t flagAdr = 0;
+	uint8_t state = onOff;
+
+	if(flag == RxAdr)
+	{
+		flagAdr = RXADR;
+	}
+
+	else if(flag == TxAdr)
+	{
+		flagAdr = TXADR;
+	}
+
+	switch(flagAdr)
+	{
+		case RXADR:
+		{
+			if(state == ON)
+			{
+				*flag = ON;
+				return TURE;
+				break;
+			}
+			else if(state == OFF)
+			{
+				*flag = OFF;
+				return FALSE;
+				break;
+			}
+		}
+
+		case TXADR:
+		{
+			if(state == ON)
+			{
+				*flag = ON;
+				return TURE;
+				break;
+			}
+			else if(state == OFF)
+			{
+				*flag = OFF;
+				return FALSE;
+				break;
+			}
+		}
 	}
 }
 
 uint8_t GetRX_Packet()
 {
-	static uint8_t RX_State = GetID;
+	static uint8_t RX_State = Ready;
 
 	switch(RX_State)
 	{
-		case GetID:
+		case Ready:
 		{
-			if( Search_ID(MB_RxBuf[SlaveID]) )
+			if( Search_ID(MB_RxBuf[SlaveID]) == TURE  )
 			{
-				packetHandle.id = MB_RxBuf[SlaveID];
-				RX_State = GetFunCode;
+				RX_State = GetID;
 			}
 			else
 			{
@@ -90,6 +178,13 @@ uint8_t GetRX_Packet()
 				packetHandle.RX_Flag = OFF;
 				RX_State = Ready;
 			}
+			break;
+		}
+		case GetID:
+		{
+
+			packetHandle.id = MB_RxBuf[SlaveID];
+			RX_State = GetFunCode;
 			break;
 		}
 		case GetFunCode:
@@ -115,20 +210,30 @@ uint8_t GetRX_Packet()
 			packetHandle.crc_high = MB_RxBuf[CrcHigh];
 			packetHandle.crc_low = MB_RxBuf[CrcLow];
 
-			packetHandle.TX_Flag = ON;
+			SetHandleFlag(&packetHandle.TX_Flag , ON);
 			RX_Buf_Init();
+printf("TX-%02x %02x %02x %02x %02x %02x\n",
+		packetHandle.id, packetHandle.FuncCode, packetHandle.adr, packetHandle.len , packetHandle.crc_high, packetHandle.crc_low);
 			RX_State = Ready;
+			return RX_OK;
 			break;
 		}
 	}
 }
 
-uint8_t GetTX_Packet()
+void GetTX_Packet()
 {
-	static uint8_t TX_State = GetID;
+
+	static uint8_t TX_State = Ready;
 
 	switch(TX_State)
 	{
+		case Ready:
+		{
+			TX_State = GetID;
+			break;
+		}
+
 		case GetID:
 		{
 			MB_TXBuf[SlaveID] = packetHandle.id;
@@ -149,68 +254,86 @@ uint8_t GetTX_Packet()
 		{
 			uint16_t getLen = packetHandle.len * 2;
 			MB_TXBuf[TxLen] = getLen;
+			TX_State = GetData;
 			break;
 		}
 
 		case GetData:
 		{
 			GetCoilRegData();
+			TX_State = GetCrc;
 			break;
 		}
 
 		case GetCrc:
-		{
+		{	uint16_t TxCrc = crc16(MB_TXBuf,MB_TXBuf[TxLen] + 3 );
 
+			uint8_t crcHighIndex = MB_TXBuf[TxLen] + 3;
+			uint8_t crcLowIndex = MB_TXBuf[TxLen] + 4;
+
+			MB_TXBuf[crcHighIndex] = TxCrc >> 8;
+			MB_TXBuf[crcLowIndex] = TxCrc;
+showPacket(MB_TXBuf, MB_TXBuf[TxLen]+5);
+			SetHandleFlag(&packetHandle.TX_Flag , OFF);
+			HAL_UART_Transmit(&huart2, MB_TXBuf, MB_TXBuf[TxLen]+5, 0xffff);
+			memset(MB_TXBuf,0,1024);
+
+			TX_State = Ready;
 			break;
 		}
 
 	}
 
 }
+
+
+void GetCoilRegData()//copy packHandle.data[] -> MB_TXBuf[data]
+{
+		GetHandleData();
+
+		uint8_t *bufPtr = &MB_TXBuf[3];
+		uint16_t *packetPtr = packetHandle.data;
+
+		int cnt = packetHandle.adr - packetHandle.len ;
+		if(cnt < 0)
+		{
+			cnt = cnt * -1;
+		}
+
+		while(cnt >= 0)
+		{
+			*bufPtr ++= *packetPtr >> 8;
+			*bufPtr ++= *packetPtr;
+			packetPtr++;
+			cnt--;
+		}
+}
+
 void GetHandleData()//copy CoilRegData -> packHandle.data[]
 {
 	uint16_t *dataPtr = GetCoilRegTable();
-	uint16_t headIdex = packetHandle.adr;
-	uint16_t tailIdex = packetHandle.len;
+	uint16_t headIndex = packetHandle.adr;
+	uint16_t tailIndex = packetHandle.len;
 
-	uint16_t len = headIdex - tailIdex;
+	int len = headIndex - tailIndex;
 
 	if(len < 0)
 	{
 		len = len * -1;
 	}
 
-	memcpy(packetHandle.data , dataPtr[headIdex] , len);
-
+	memcpy(packetHandle.data , &dataPtr[headIndex] , len * 2);// why len * 2 : sizeof = 1byte
 }
 
-void GetCoilRegData()//copy packHandle.data[] -> MB_TXBuf[data]
+uint16_t* GetCoilRegTable()
 {
-	GetHandleData();
-
-	int cnt = packetHandle.len * 2;
-	uint8_t *bufPtr = &MB_TXBuf[3];
-	uint16_t *packetPtr = packetHandle.data;
-
-	while(cnt >= 0)
-	{
-		*bufPtr ++= *packetPtr >> 8;
-		*bufPtr ++= *packetPtr;
-		packetPtr++;
-		cnt--;
-	}
-
-}
-
-uint8_t GetCoilRegTable()
-{
-	uint8_t coilRegAdr = GetTableAdr();
+	uint16_t coilRegAdr = GetTableAdr();
 
 	switch(coilRegAdr)
 	{
 		case Coil_1:
 		{
-			return CoilTable_1;
+			return &CoilTable_1[0];
 			break;
 		}
 
@@ -222,20 +345,20 @@ uint8_t GetCoilRegTable()
 
 		case Reg_30000:
 		{
-			return RegTable_30000;
+			return &RegTable_30000[0];
 			break;
 		}
 
 		case Reg_40000:
 		{
-			//return CoilTable_1;
+			return &RegTable_30000[0];
 			break;
 		}
 	}
 
 }
 
-uint8_t GetTableAdr()
+uint16_t GetTableAdr()
 {
 	if(MB_TXBuf[FuncCode] == 1 || MB_TXBuf[FuncCode] == 5 || MB_TXBuf[FuncCode] == 15)
 	{
@@ -251,43 +374,40 @@ uint8_t GetTableAdr()
 	}
 	else if(MB_TXBuf[FuncCode] == 3 || MB_TXBuf[FuncCode] == 6 || MB_TXBuf[FuncCode] == 16)
 	{
-		return Reg_40000;
+		return Reg_30000;//Reg_40000
 	}
-
 }
 
+void showPacket(uint8_t *packet , uint16_t len)
+{
+	uint8_t buf[len];
 
-//
-//void showPacket(uint8_t *packet , uint16_t len)
-//{
-//	uint8_t buf[len];
-//
-//	memcpy(buf,packet,len);
-//	RX_Buf_Init();
-//
-//	if(len < 8)// if intput packet RX.
-//	{
-//		printf("TX_Packet:");
-//	}
-//	else
-//	{
-//		printf("RX_Packet:");
-//	}
-//
-//	for (int i = 0; i < len; i++)
-//	{
-//		if (buf[i] <= 0x0A)
-//		{
-//			printf("0%x ", buf[i]);
-//		}
-//		else
-//		{
-//			printf("%x ", buf[i]);
-//		}
-//	}
-//	printf("\n");
-//
-//}
+	memcpy(buf,packet,len);
+	RX_Buf_Init();
+
+	if(len <= 8)// if intput packet RX.
+	{
+		printf("TX_Packet:");
+	}
+	else
+	{
+		printf("RX_Packet:");
+	}
+
+	for (int i = 0; i < len; i++)
+	{
+		if (buf[i] <= 0x0A)
+		{
+			printf("0%x ", buf[i]);
+		}
+		else
+		{
+			printf("%x ", buf[i]);
+		}
+	}
+	printf("\n");
+
+}
 
 void GetCRC(uint8_t *packet)
 {
@@ -297,8 +417,6 @@ void GetCRC(uint8_t *packet)
 
 	packet[CRC_HIGH_NIBBLE] = CRC_High;
 	packet[CRC_LOW_NIBBLE] = CRC_Low;
-
-
 }
 
 //
