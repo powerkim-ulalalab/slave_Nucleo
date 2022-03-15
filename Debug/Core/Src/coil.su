@@ -1,0 +1,5 @@
+Modbus.h:165:17:crc16	24	static
+coil.c:7:10:GetCoil_Index	24	static
+coil.c:19:9:ReverseBitOrder	24	static
+coil.c:33:10:DataLen	24	static
+coil.c:52:6:GetCoilData	40	static

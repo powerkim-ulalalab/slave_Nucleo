@@ -1,5 +1,6 @@
 "./Core/Src/Modbus.o"
 "./Core/Src/Timer.o"
+"./Core/Src/coil.o"
 "./Core/Src/main.o"
 "./Core/Src/stm32f4xx_hal_msp.o"
 "./Core/Src/stm32f4xx_it.o"

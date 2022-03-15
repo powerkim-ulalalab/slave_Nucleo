@@ -6,6 +6,7 @@
  */
 
 #include "Modbus.h"
+#include "coil.h"
 
 volatile uint16_t RX_DataCnt = 0;
 uint8_t MB_RxBuf[RXBUFLEN] = {0,};
@@ -34,7 +35,7 @@ void MB_Slave()
 	Rx_TimerStartStop();
 	frameCplt();
 
-	uint8_t mode = SelectMode(packetHandle.RX_Flag ,packetHandle.TX_Flag );
+	uint8_t mode = SelectMode(packetHandle.RX_Flag ,packetHandle.TX_Flag);
 
 	switch(mode)
 	{
@@ -65,11 +66,6 @@ uint8_t SelectMode(uint8_t RX_Flag , uint8_t TX_Flag)
 	{
 		return TXMODE;
 	}
-}
-
-void TableInit()
-{
-	memset(table.slaveId, EMPTY , SLAVEIDLEN);
 }
 
 void packetInit()
@@ -201,6 +197,7 @@ uint8_t GetRX_Packet()
 		}
 		case Getlen:
 		{
+
 			packetHandle.len = (uint16_t)( MB_RxBuf[LenHigh] | MB_RxBuf[LenLow] );
 			RX_State = GetCrc;
 			break;
@@ -225,6 +222,7 @@ void GetTX_Packet()
 {
 
 	static uint8_t TX_State = Ready;
+	static uint8_t DataType = Null;
 
 	switch(TX_State)
 	{
@@ -252,16 +250,43 @@ void GetTX_Packet()
 
 		case Getlen:
 		{
-			uint16_t getLen = packetHandle.len * 2;
-			MB_TXBuf[TxLen] = getLen;
-			TX_State = GetData;
+			uint16_t tablePtr = GetTableAdr();//want Coil?? Reg??
+
+			if(tablePtr == Coil_1 || tablePtr == Coil_10000)//GetCoilLen
+			{
+				MB_TXBuf[TxLen] = DataLen(packetHandle.adr, packetHandle.len);
+				TX_State = GetData;
+				DataType = Coil;
+			}
+			else
+			{
+				MB_TXBuf[TxLen] = packetHandle.len * 2;
+				TX_State = GetData;
+				DataType = Reg;
+			}
+
 			break;
 		}
 
 		case GetData:
 		{
-			GetCoilRegData();
-			TX_State = GetCrc;
+			switch(DataType)
+			{
+				case Coil:
+				{
+					GetCoilData(&MB_TXBuf, GetCoilRegTable(), packetHandle.adr);
+					TX_State = GetCrc;
+					break;
+				}
+
+				case Reg:
+				{
+					GetRegData();
+					TX_State = GetCrc;
+					break;
+				}
+			}
+
 			break;
 		}
 
@@ -287,7 +312,7 @@ showPacket(MB_TXBuf, MB_TXBuf[TxLen]+5);
 }
 
 
-void GetCoilRegData()//copy packHandle.data[] -> MB_TXBuf[data]
+void GetRegData()//copy packHandle.data[] -> MB_TXBuf[data]
 {
 		GetHandleData();
 
@@ -333,25 +358,25 @@ uint16_t* GetCoilRegTable()
 	{
 		case Coil_1:
 		{
-			return &CoilTable_1[0];
+			return &CoilTable_1;
 			break;
 		}
 
 		case Coil_10000:
 		{
-			//return CoilTable_1;
+			return &CoilTable_10000;
 			break;
 		}
 
 		case Reg_30000:
 		{
-			return &RegTable_30000[0];
+			return &RegTable_30000;
 			break;
 		}
 
 		case Reg_40000:
 		{
-			return &RegTable_30000[0];
+			return &RegTable_40000;
 			break;
 		}
 	}

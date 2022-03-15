@@ -120,7 +120,7 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_IT(&huart2, &RX_Data, 1);
-  printf("UART6!!\n");
+  printf("UART2!!\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */

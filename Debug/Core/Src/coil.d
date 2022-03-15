@@ -1,5 +1,5 @@
-Core/Src/Modbus.o: ../Core/Src/Modbus.c ../Core/Inc/Modbus.h \
- ../Core/Inc/main.h ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
+Core/Src/coil.o: ../Core/Src/coil.c ../Core/Inc/coil.h ../Core/Inc/main.h \
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_def.h \
@@ -27,10 +27,9 @@ Core/Src/Modbus.o: ../Core/Src/Modbus.c ../Core/Inc/Modbus.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h \
- ../Core/Inc/Timer.h ../Core/Inc/CoilReg_Table.h ../Core/Inc/coil.h \
- ../Core/Inc/Modbus.h
+ ../Core/Inc/Modbus.h ../Core/Inc/Timer.h ../Core/Inc/CoilReg_Table.h
 
-../Core/Inc/Modbus.h:
+../Core/Inc/coil.h:
 
 ../Core/Inc/main.h:
 
@@ -90,10 +89,8 @@ Core/Src/Modbus.o: ../Core/Src/Modbus.c ../Core/Inc/Modbus.h \
 
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_uart.h:
 
+../Core/Inc/Modbus.h:
+
 ../Core/Inc/Timer.h:
 
 ../Core/Inc/CoilReg_Table.h:
-
-../Core/Inc/coil.h:
-
-../Core/Inc/Modbus.h:

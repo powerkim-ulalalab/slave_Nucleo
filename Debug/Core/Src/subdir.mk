@@ -7,6 +7,7 @@
 C_SRCS += \
 ../Core/Src/Modbus.c \
 ../Core/Src/Timer.c \
+../Core/Src/coil.c \
 ../Core/Src/main.c \
 ../Core/Src/stm32f4xx_hal_msp.c \
 ../Core/Src/stm32f4xx_it.c \
@@ -18,6 +19,7 @@ C_SRCS += \
 OBJS += \
 ./Core/Src/Modbus.o \
 ./Core/Src/Timer.o \
+./Core/Src/coil.o \
 ./Core/Src/main.o \
 ./Core/Src/stm32f4xx_hal_msp.o \
 ./Core/Src/stm32f4xx_it.o \
@@ -29,6 +31,7 @@ OBJS += \
 C_DEPS += \
 ./Core/Src/Modbus.d \
 ./Core/Src/Timer.d \
+./Core/Src/coil.d \
 ./Core/Src/main.d \
 ./Core/Src/stm32f4xx_hal_msp.d \
 ./Core/Src/stm32f4xx_it.d \

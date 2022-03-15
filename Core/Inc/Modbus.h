@@ -79,11 +79,17 @@ enum Frame
 	CrcLow = 7,
 
 	TxLen = 2,
+	TxData = 3
 
 };
 
 
-
+enum Datatype
+{
+	Null = 0,
+	Coil = 1,
+	Reg = 2
+};
 
 enum FuncCode
 {
@@ -179,7 +185,6 @@ uint16_t* GetCoilRegTable();
 uint16_t GetTableAdr();
 uint8_t GetRX_Packet();
 void packetInit();
-void TableInit();
 uint8_t Search_ID(uint8_t taget);
 void frameCplt();
 void MB_Slave();
