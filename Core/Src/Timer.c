@@ -1,7 +1,7 @@
 #include "timer.h"
 #include "Modbus.h"
 
-uint8_t RxTimerFlag = 0;
+uint8_t RxTimerFlag = OFF;
 volatile uint16_t RxTimerCnt = 0;
 
 
@@ -25,9 +25,8 @@ void HAL_TIM_PeriodElapsedCallback (TIM_HandleTypeDef *htim)//0.1ms
   {
 	  if(RxTimerCnt++ > 600)
 	  {
-
 		  RxTimerCnt = 0;
-		  RxTimerFlag = 0;
+		  RxTimerFlag = OFF;
 
 	  }
   }

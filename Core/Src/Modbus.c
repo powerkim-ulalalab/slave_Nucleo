@@ -21,7 +21,6 @@ uint8_t Search_ID(uint8_t taget)
 {
 	if(Table_SlaveID[taget] == FULL)
 	{
-
 		return TURE;
 	}
 	else
@@ -85,7 +84,7 @@ void RX_Buf_Init()
 {
 	memset(MB_RxBuf,0,RXBUFLEN);
 	RX_Data = 0;
-	RX_DataCnt =0;
+	RX_DataCnt = 0;
 }
 
 void frameCplt()
@@ -208,6 +207,7 @@ uint8_t GetRX_Packet()
 			packetHandle.crc_low = MB_RxBuf[CrcLow];
 
 			SetHandleFlag(&packetHandle.TX_Flag , ON);
+			SetHandleFlag(&packetHandle.RX_Flag , OFF);
 			RX_Buf_Init();
 printf("TX-%02x %02x %02x %02x %02x %02x\n",
 		packetHandle.id, packetHandle.FuncCode, packetHandle.adr, packetHandle.len , packetHandle.crc_high, packetHandle.crc_low);
@@ -274,7 +274,7 @@ void GetTX_Packet()
 			{
 				case Coil:
 				{
-					GetCoilData(&MB_TXBuf, GetCoilRegTable(), packetHandle.adr);
+					GetCoilData(MB_TXBuf, GetCoilRegTable(), packetHandle.adr);
 					TX_State = GetCrc;
 					break;
 				}
@@ -399,7 +399,7 @@ uint16_t GetTableAdr()
 	}
 	else if(MB_TXBuf[FuncCode] == 3 || MB_TXBuf[FuncCode] == 6 || MB_TXBuf[FuncCode] == 16)
 	{
-		return Reg_30000;//Reg_40000
+		return Reg_40000;
 	}
 }
 
@@ -410,13 +410,20 @@ void showPacket(uint8_t *packet , uint16_t len)
 	memcpy(buf,packet,len);
 	RX_Buf_Init();
 
-	if(len <= 8)// if intput packet RX.
+	int mode = SelectMode(packetHandle.RX_Flag ,packetHandle.TX_Flag);
+
+	switch(mode)
 	{
-		printf("TX_Packet:");
-	}
-	else
-	{
-		printf("RX_Packet:");
+		case RXMODE:
+		{
+			printf("RX_Packet:");
+			break;
+		}
+		case TXMODE:
+		{
+			printf("TX_Packet:");
+			break;
+		}
 	}
 
 	for (int i = 0; i < len; i++)
