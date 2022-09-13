@@ -32,6 +32,10 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "i2c_sw.h"
+#include "kalman.h"
+#include "vibration_sen.h"
+#include "mpu6050.h"
 
 /* USER CODE END Includes */
 
@@ -66,6 +70,14 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define LD2_Pin GPIO_PIN_5
 #define LD2_GPIO_Port GPIOA
+#define GPIO_SDA1_Pin GPIO_PIN_12
+#define GPIO_SDA1_GPIO_Port GPIOB
+#define GPIO_SCL1_Pin GPIO_PIN_13
+#define GPIO_SCL1_GPIO_Port GPIOB
+#define GPIO_SDA2_Pin GPIO_PIN_14
+#define GPIO_SDA2_GPIO_Port GPIOB
+#define GPIO_SCL2_Pin GPIO_PIN_15
+#define GPIO_SCL2_GPIO_Port GPIOB
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14

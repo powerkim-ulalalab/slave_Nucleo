@@ -76,7 +76,7 @@ PUTCHAR_PROTOTYPE
 {
   /* Place your implementation of fputc here */
   /* e.g. write a character to the USART3 and Loop until the end of transmission */
-  HAL_UART_Transmit(&huart6, (uint8_t *)&ch, 1, 0xFFFF);
+  HAL_UART_Transmit(&huart2, (uint8_t *)&ch, 1, 0xFFFF);
 
   return ch;
 
@@ -120,6 +120,11 @@ int main(void)
   MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
   HAL_UART_Receive_IT(&huart2, &RX_Data, 1);
+  SW_I2C_initial();
+  i2c_port_initial(2);
+  //MPU6050_Init(2);
+//  HAL_Delay(500);
+
   printf("UART2!!\n");
   /* USER CODE END 2 */
 
@@ -127,10 +132,37 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	 uint8_t sel = 2U;
+	 uint8_t dev_addr = GYRO_DEV;
+	 uint8_t reg = 0x3B;
+	 uint8_t returnack = 0U;
 
     /* USER CODE END WHILE */
-	  MB_Slave();
+	  //ReadI2C(2);
+	 MPU6050_Read_Accel(sel, GYRO_DEV);
+
+	 //SW_I2C_WriteControl_8Bit_OnlyRegAddr(2, dev_addr|0x00, reg);
+
+//	 i2c_start_condition(sel);
+//
+//	 SW_I2C_Write_Data(sel,(uint8_t)dev_addr|0x00);
+//	 if (!i2c_check_ack(sel))
+//	 {
+//		 printf("NOT ACK\n");
+//		 returnack = FALSE;
+//	 }
+//
+//	 SW_I2C_Write_Data(sel,(uint8_t)reg);
+//
+//	 if (!i2c_check_ack(sel))
+//	 {
+//		 printf("NOT ACK\n");
+//		 returnack = FALSE;
+//	 }
+//
+//	 i2c_stop_condition(sel);
+//
+	 HAL_Delay(500);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -336,6 +368,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_SDA1_Pin|GPIO_SCL1_Pin|GPIO_SCL2_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -348,6 +383,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : GPIO_SDA1_Pin GPIO_SCL1_Pin GPIO_SCL2_Pin */
+  GPIO_InitStruct.Pin = GPIO_SDA1_Pin|GPIO_SCL1_Pin|GPIO_SCL2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : GPIO_SDA2_Pin */
+  GPIO_InitStruct.Pin = GPIO_SDA2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIO_SDA2_GPIO_Port, &GPIO_InitStruct);
 
 }
 
