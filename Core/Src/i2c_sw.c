@@ -646,14 +646,7 @@ uint8_t SW_I2C_ReadControl_8Bit(uint8_t sel, uint8_t IICID, uint8_t regaddr)
     return readdata;
 }
 
-void SW_I2C_ReadControl_8Bit_Test(uint8_t sel, uint8_t IICID)
-{
-    i2c_start_condition(sel);
 
-    i2c_slave_address(sel, IICID, WRITE_CMD);
-
-
-}
 
 uint16_t SW_I2C_ReadControl_16Bit(uint8_t sel, uint8_t IICID, uint8_t regaddr)
 {
